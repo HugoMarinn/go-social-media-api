@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/HugoMarinn/go-social-media-api/internal/auth"
 	"github.com/HugoMarinn/go-social-media-api/internal/config"
 )
 
@@ -20,8 +21,10 @@ func New(cfg *config.Config) *Server {
 	return &Server{cfg}
 }
 
-func (s *Server) Run() {
-	handler := MapRoutes()
+func (s *Server) Run(authHandler auth.Handler) {
+	handler := MapRoutes(
+		authHandler,
+	)
 	server := http.Server{
 		Addr:    ":" + s.cfg.Port,
 		Handler: handler,

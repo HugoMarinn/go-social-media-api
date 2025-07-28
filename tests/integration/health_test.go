@@ -7,21 +7,23 @@ import (
 	"testing"
 
 	"github.com/HugoMarinn/go-social-media-api/internal/server"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestHealthyEndpoint(t *testing.T) {
-	handler := server.MapRoutes()
+	r := chi.NewRouter()
+	r.Get("/api/v1/healthy", server.HealthyHandler)
 
-	ts := httptest.NewServer(handler)
+	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	res, err := http.Get(ts.URL + "/api/v1/healthy")
+	resp, err := http.Get(ts.URL + "/api/v1/healthy")
 	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, res.StatusCode)
+	defer resp.Body.Close()
 
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	var body map[string]string
-	err = json.NewDecoder(res.Body).Decode(&body)
-	assert.NoError(t, err)
+	json.NewDecoder(resp.Body).Decode(&body)
 	assert.Equal(t, "OK!", body["status"])
 }

@@ -17,11 +17,10 @@ type Config struct {
 
 func New() (*Config, error) {
 	if err := godotenv.Load(); err != nil {
-		return nil, errors.New(".env file not found")
+		return nil, errors.New("failed to load .env load")
 	}
 
-	dsn := getEnvOrDefault("DATABASE_URL", "postgres://user:password@localhost:5432/go_social_media")
-	db, err := setupDatabase(dsn)
+	db, err := setupDatabase()
 	if err != nil {
 		return nil, fmt.Errorf("failed DB setup: %v", err)
 	}

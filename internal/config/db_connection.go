@@ -1,19 +1,16 @@
 package config
 
 import (
-	"errors"
 	"fmt"
+	"os"
 
-	"github.com/golang-migrate/migrate/v4"
-
-	"github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
+	"github.com/pressly/goose/v3"
 )
 
-func setupDatabase(dsn string) (*sqlx.DB, error) {
-	db, err := connectDB(dsn)
+func setupDatabase() (*sqlx.DB, error) {
+	db, err := connectDB()
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect DB: %v", err)
 	}
@@ -25,7 +22,8 @@ func setupDatabase(dsn string) (*sqlx.DB, error) {
 	return db, nil
 }
 
-func connectDB(dsn string) (*sqlx.DB, error) {
+func connectDB() (*sqlx.DB, error) {
+	dsn := os.Getenv("DATABASE_URL")
 	db, err := sqlx.Open("pgx", dsn)
 	if err != nil {
 		return nil, err
@@ -39,22 +37,6 @@ func connectDB(dsn string) (*sqlx.DB, error) {
 }
 
 func runMigrations(db *sqlx.DB) error {
-	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
-	if err != nil {
-		return err
-	}
-
-	m, err := migrate.NewWithDatabaseInstance(
-		"file://migrations",
-		"postgres",
-		driver,
-	)
-	if err != nil {
-		return err
-	}
-
-	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		return err
-	}
-	return nil
+	goose.SetDialect("postgres")
+	return goose.Up(db.DB, "./migrations/production")
 }
